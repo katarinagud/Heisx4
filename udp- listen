@@ -1,0 +1,23 @@
+//Program for å lytte
+package main
+import "net"
+import "fmt"
+
+
+func main(){
+    conn, _ := net,DialUDP("udp", nil, &net.UDPAddr{IP:[]byte{127,0,0,1}, Port:30000, Zone:""})
+    defer conn.Close()
+    conn.Write([]byte("hello"))
+}
+
+raddr, err := net.ResolveUDPAddr("udp", address)
+if err != nil {
+    return
+}
+
+conn, err := net.DialUDP("udp", nil, raddr)
+if err != nil {
+    return
+}
+
+defer conn.Close()
