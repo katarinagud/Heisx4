@@ -1,6 +1,7 @@
 package main
 
 import "./elevio"
+import "./queue"
 import "fmt"
 import "./network/bcast"
 import "./network/localip"
@@ -11,7 +12,7 @@ import "os"
 type Button struct {
 	Floor int
 	Type int
-}
+}0
 
 
 func main(){
@@ -44,9 +45,12 @@ func main(){
 	buttonTx := make(chan Button)
 	buttonRx := make(chan Button)
 
-	orderAccepted := make(chan bool)
+	costTx := make(chan )
 
-	go elevio.PollButtons(orderAccepted)
+
+	//orderAccepted := make(chan bool)
+
+	//go elevio.PollButtons(orderAccepted)
 
 	go peers.Transmitter(15647, id, peerTxEnable)
 	go peers.Receiver(15647, peerUpdateCh)
@@ -59,7 +63,8 @@ func main(){
     elevio.Init("localhost:"+driver_port, numFloors)	
     
     drv_buttons := make(chan elevio.ButtonEvent)
-    drv_floors  := make(chan int)
+	drv_floors  := make(chan int)
+	
     
     go elevio.PollButtons(drv_buttons)
     go elevio.PollFloorSensor(drv_floors)
@@ -70,13 +75,18 @@ func main(){
         case a := <- drv_buttons:
 			fmt.Printf("drv_buttons: %#v\n", a)
 			buttonTx <- Button{Floor: a.Floor, Type: int(a.Button)}
-			updateQueue
+			UpdateQueueFromIO(a)
+		
+		case a := <- buttonTx:
+			cost int = UpdateQueueFromNetwork(a)
+
+
             
 		case a := <- drv_floors:			
 			fmt.Printf("drv_floors:  %#v\n", a)
 		
 			
-		case b := <-orderAccepted:
+		//case b := <-orderAccepted:
 			// Bestemme hvilken av heisene som skal ta orderen
             
 		case p := <-peerUpdateCh:
@@ -91,10 +101,7 @@ func main(){
     }    
 }
 
-func updateQueue(oldQueue){
+//func updateQueue(oldQueue){
 	//legge ordre i egen matrise
 	//sende ut ny ordrematrise
-	//vente på godkjenning fra alle heiser
-
-
-}
+	//vente på godkjenning fra alle heiser}

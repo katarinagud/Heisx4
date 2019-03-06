@@ -23,3 +23,17 @@ type STATES struct {
 	finished_order chan bool
 
 func initElev(cha)
+
+func fsm_button_pressed()
+
+
+
+
+
+for{
+	select{
+	case newOrder := new_order:
+		//moving --> update queue
+		//idle --> choose direction, setmotordir
+	}
+}
