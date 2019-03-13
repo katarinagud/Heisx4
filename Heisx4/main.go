@@ -37,7 +37,7 @@ func main(){
 		driver_port = "15657"
 	}
 
-	// NETWORK
+	// Channels
 
 	peerUpdateCh := make(chan peers.PeerUpdate)
 	peerTxEnable := make(chan bool)
@@ -45,29 +45,49 @@ func main(){
 	buttonTx := make(chan Button)
 	buttonRx := make(chan Button)
 
-	costTx := make(chan )
+	drv_buttons := make(chan elevio.ButtonEvent)
+	drv_floors  := make(chan int)
+
+	local_state := make(chan fsm.ElevState)
+	all_states := make(chan fsm.ElevState)
+
+	costTx := make(chan queue.CostValue)
+	costRx := make(chan queue.CostValue)
+
+	order_accepted := make(chan queue.ElevQueue)
+
+	portCh := make(chan string)
+
+	fsm_move := make(chan bool)
 
 
-	//orderAccepted := make(chan bool)
 
-	//go elevio.PollButtons(orderAccepted)
+	//Goroutines
 
 	go peers.Transmitter(15647, id, peerTxEnable)
 	go peers.Receiver(15647, peerUpdateCh)
+
 	go bcast.Transmitter(16569, buttonTx)
 	go bcast.Receiver(16569, 	buttonRx)
-
-
-	// ELEV DRIVER
-
-    elevio.Init("localhost:"+driver_port, numFloors)	
-    
-    drv_buttons := make(chan elevio.ButtonEvent)
-	drv_floors  := make(chan int)
 	
-    
-    go elevio.PollButtons(drv_buttons)
-    go elevio.PollFloorSensor(drv_floors)
+	go bcast.Transmitter(15000, costTx)
+	go bcast.Receiver(15000, costRx)
+
+	go elevio.PollButtons(drv_buttons)
+	go elevio.PollFloorSensor(drv_floors)
+
+	go elevstates.ElevStates(id, local_state, all_states)
+
+	go queue.UpdateQueue(buttonRx, all_states, order_accepted)	
+
+	go fsm.SetDir(fsm_move)
+
+	go timer.""()
+
+	elevio.Init("localhost:"+driver_port, numFloors)
+
+
+	
     
     
     for {
@@ -75,13 +95,8 @@ func main(){
         case a := <- drv_buttons:
 			fmt.Printf("drv_buttons: %#v\n", a)
 			buttonTx <- Button{Floor: a.Floor, Type: int(a.Button)}
-			UpdateQueueFromIO(a)
-		
-		case a := <- buttonTx:
-			cost int = UpdateQueueFromNetwork(a)
-
-
-            
+					
+		            
 		case a := <- drv_floors:			
 			fmt.Printf("drv_floors:  %#v\n", a)
 		

@@ -3,39 +3,33 @@
 import "./elevio"
 import "fmt"
 import "math/rand"
+import
 
 type ElevQueue struct {
 	QueueSystem [4][4]int
 	CabCall [4]int
 	HallCall [4][2]int
 	ID string
+}0
+
+type CostValue struct {
+	cost int
+	port string
 }
 
-func UpdateQueueFromIO(button ButtonEvent) {
-	if button.Button == 2 {
-		ElevQueue.CabCall[button.Floor] == 1
-	}
+func UpdateQueue(buttonPressed chan Button, all_states chan map[string]fsm.ElevState, order_accepted chan Button){
 
-	if button.Button != 2 {
-		ElevQueue.HallCall[button.Floor][button.Button] == 1
-	}
-
-	return ElevQueue
 }
 
-func UpdateQueueFromNetwork(button <-chan Button) {
-	if button.Type == 2 {
-		ElevQueue.CabCall[button.Floor] == 1
-	}
-
-	if button.Type != 2 {
-		ElevQueue.HallCall[button.Floor][button.Type] == 1
-	}
-
-	cost int = rand.Intn(100)
-
-	return cost
+func GetPortNumb(port <-chan portCh) {
+	CostValue.port = <- port
 }
+
+func SendCost(CostCh chan<- CostValue) {
+	CostCh <- CostValue
+}
+
+
 
 
 

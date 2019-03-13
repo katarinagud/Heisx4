@@ -6,12 +6,19 @@ import "sync"
 import "net"
 import "fmt"
 
-type STATES struct {
+type STATES struct{
 	IDLE bool
 	MOVING bool
 	DOOR_OPEN bool
 	MOTOR_STOP bool
 	INIT bool
+}
+
+type ElevStates struct {
+	Floor int
+	Direction int
+	State int
+	Orders [][] int
 }
 
 
