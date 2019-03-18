@@ -47,14 +47,15 @@ func main(){
 
 	drv_buttons := make(chan elevio.ButtonEvent)
 	drv_floors  := make(chan int)
+	drv_motor_dir := make(chan elevio.MotorDirection)
 
-	local_state := make(chan fsm.ElevState)
-	all_states := make(chan fsm.ElevState)
+	local_stateCh := make(chan fsm.ElevStates)
+	all_statesCh := make(chan fsm.ElevStates)
 
 	costTx := make(chan queue.CostValue)
 	costRx := make(chan queue.CostValue)
 
-	order_accepted := make(chan queue.ElevQueue)
+	updateOrder := make(chan Button)
 
 	portCh := make(chan string)
 
@@ -76,9 +77,12 @@ func main(){
 	go elevio.PollButtons(drv_buttons)
 	go elevio.PollFloorSensor(drv_floors)
 
-	go elevstates.ElevStates(id, local_state, all_states)
+	go fsm.Fsm_update_Elevstates(drv_floors, drv_motor_dir, updateOrder)
 
-	go queue.UpdateQueue(buttonRx, all_states, order_accepted)	
+	go elevstates.ElevStates(id, local_state, all_statesCh)
+
+	go queue.UpdateQueue(buttonRx, all_statesCh, peerUpdateCh, updateOrder)
+			
 
 	go fsm.SetDir(fsm_move)
 

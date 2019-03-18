@@ -1,14 +1,14 @@
 package main
 
 type T struct {
-	State ElevState
+	State ElevStates
 	ID string
 }
 
 
-func ElevStates(local_id string, local_state ElevState, all_states map[string]ElevState ){
+func ElevStates(local_id string, local_state ElevStates, all_statesCh chan<- map[string]ElevStates ){
 
-    var states map[string]ElevState
+    var states map[string]ElevStates
 
 	netSend := make(chan T)
 	netRecv := make(chan T)
@@ -27,7 +27,9 @@ func ElevStates(local_id string, local_state ElevState, all_states map[string]El
 				}
 				
 			
-		case all_states <- states:
+		case all_statesCh <- states:
+
+	
 
         }
     }

@@ -6,6 +6,7 @@ import "sync"
 import "net"
 import "fmt"
 
+
 type STATES struct{
 	IDLE bool
 	MOVING bool
@@ -17,19 +18,41 @@ type STATES struct{
 type ElevStates struct {
 	Floor int
 	Direction int
-	State int
-	Orders [][] int
+	State STATES
+	Orders [4][2] int
 }
 
+type ElevQueue struct {
+	QueueSystem [4][4]int
+	CabCall [4]int
+	HallCall [4][2]int
+	ID string
+}0
 
-	door chan bool
-	current_floor chan int
-	new_order chan int
-	elev_dir chan bool
-	button_lights chan ButtonEvent
-	finished_order chan bool
 
-func initElev(cha)
+func Fsm_update_Elevstates(floor <-chan int, motor_dir <-chan MotorDirection, updateOrder <-chan Button) {
+
+	for{
+		select{
+	case a := <- floor:
+		ElevStates.Floor = a
+		ElevStates.States = State
+	case a := <- motor_dir:
+		ElevStates.Direction = a
+		ElevStates.States = State
+	case a:= <- updateOrder:
+		if a.Type != 2{
+			ElevStates.Orders[a.Floor][a.Type] = 1
+			ElevStates.States = State
+		}
+
+			
+	}
+	
+
+	}
+}
+
 
 func fsm_button_pressed()
 
