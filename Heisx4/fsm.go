@@ -16,10 +16,10 @@ type STATES struct{
 }
 
 type ElevStates struct {
-	Floor int
+	Floor := elevio.getFloor()
 	Direction int
 	State STATES
-	Orders [4][2] int
+	Orders [4][3] int
 }
 
 type ElevQueue struct {
@@ -28,6 +28,14 @@ type ElevQueue struct {
 	HallCall [4][2]int
 	ID string
 }0
+
+
+
+
+
+
+
+
 
 
 func Fsm_update_Elevstates(floor <-chan int, motor_dir <-chan MotorDirection, updateOrder <-chan Button) {
@@ -54,16 +62,58 @@ func Fsm_update_Elevstates(floor <-chan int, motor_dir <-chan MotorDirection, up
 }
 
 
-func fsm_button_pressed()
+func fsm_run_elev(updateOrder <-chan Button, floorReached <-chan int ) {
 
+	for{
+		select{
+		case newOrder := <- updateOrder:
 
+			switch ElevStates.State {
+			case IDLE:
+				var dir MotorDirection := ChooseDir(ElevStates.Floor)
+				if dir == 0 {
+					ElevStates.State = DOOR_OPEN
+					elevio.SetDoorOpenLamp(1)
+					time.Sleep(3*time.Second)
+					elevio.SetDoorOpenLamp(0)
+					ElevStates.State = IDLE
 
+				}
+				else{
+					SetMotorDirection(dir)
+					ElevStates.State = MOVING
+				}
+				
+				
+			case MOVING:
+			
+			case DOOR_OPEN:
+				if ElevStates.Floor == newOrder.Floor {
+					elevio.SetDoorOpenLamp(1)
+					time.Sleep(3*time.Second)
+					elevio.SetDoorOpenLamp(0)
+					ElevStates.State = IDLE
 
+				}
+			case MOTOR_STOP:
+				
+			}
+		
+		case floorArrival := <- floorReached:
 
-for{
-	select{
-	case newOrder := new_order:
-		//moving --> update queue
-		//idle --> choose direction, setmotordir
+			switch ElevStates.State {
+			case IDLE:
+			
+			case MOVING:
+				if ElevStates.Orders[F][] == 
+			}
+			
+		}
 	}
+
 }
+
+
+
+
+
