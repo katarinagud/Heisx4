@@ -1,9 +1,9 @@
-
+package main
 
 import "./elevio"
 import "fmt"
 import "math/rand"
-import
+import "./types"
 
 type ElevQueue struct {
 	QueueSystem [4][4]int
@@ -13,39 +13,71 @@ type ElevQueue struct {
 }
 
 
-func UpdateQueue(buttonPressed <-chan Button, all_states <-chan map[string]fsm.ElevStates, peers <-chan peers.PeerUpdate, updateOrder chan<- Button){
+
+
+func Assigner(buttonPressed <-chan elevio.ButtonEvent, all_states <-chan map[string]fsm.ElevState, peerList <-chan []string, assignedOrder chan<- Order){
 	for{
 		select{
 		case a := <- buttonPressed:
-			if a.Type != 2 {
-				ElevQueue.HallCall[a.Floor][a.Type] = 1
+			states := <-all_states
 
-				var costs map[string][4] int
-				var cost int
-				for id, elev_state := range all_states{
-					cost = calculateCost(elev_state)
-					costs[id] = cost
-					}
-				//CALCULATE COST and compare
-
-				if lowest cost
-				//update fsm.ElevState
-				//updateOrder
-			}
-			else{
-				ElevQueue.CabCall[a.Floor] = 1
-			}
-		case a := <- all_states:
-			
-		
+			// TODO: filter out dead peers via peerList
+			bestID := findBest(a, states)
+			assignedOrder <- AssignedOrder{a.Floor, a.ButtonType, bestID}		
 		}
 	}
 }
 
-func calculateCost(elev_state fsm.ElevState){
-
+func findBest(btn elevio.ButtonEvent, states map[string]fsm.ElevState) string {
+	bestCost := int.max
+	bestID := LocalID
+	for id, state := range(states) {
+		state_cpy := state	// copy necessary??
+		state_cpy.Orders[btn.Floor][btn.ButtonType] = 2
+		c := timeToIdle(state_cpy)
+		if c < bestCost {
+			bestCost = c
+			bestID = id
+		}
+	}
+	return bestID
 }
 
+
+func timeToIdle(state fsm.ElevState) int {
+	const travelTime = 2500
+	const doorOpenTime = 3000
+    duration := 0
+    
+    switch state.STATE {
+    case IDLE:
+        state.Direction = requests_chooseDirection(e)
+        if(state.Direction == MD_Stop){
+            return duration;
+        }
+        break
+    case MOVING:
+        duration += travelTime/2
+        state.Floor += state.Direction
+        break
+    case DOOR_OPEN:
+        duration -= doorOpenTime/2
+    }
+
+
+    for {
+        if(ShouldStop(state)){
+            state = ClearAtCurrentFloor(state, NULL)
+            duration += doorOpenTime
+            state.Direction = ChooseDirection(state)
+            if(state.Direction == MD_Stop){
+                return duration
+            }
+        }
+        state.Floor += state.direction
+        duration += travelTime
+    }
+}
 
 
 

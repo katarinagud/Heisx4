@@ -1,14 +1,22 @@
 package main
 
+import (
+	"../conn"
+	"fmt"
+	"net"
+	"sort"
+	"time"
+) 
+
 type T struct {
 	State ElevStates
 	ID string
 }
 
 
-func ElevStates(local_id string, local_state ElevStates, all_statesCh chan<- map[string]ElevStates ){
+func ElevStates(local_id string, local_state ElevStates, all_states map[string]ElevStates ){
 
-    var states map[string]ElevStates
+	var states map[string]ElevStates	
 
 	netSend := make(chan T)
 	netRecv := make(chan T)
@@ -19,18 +27,22 @@ func ElevStates(local_id string, local_state ElevStates, all_statesCh chan<- map
     for{
         select{
 		case a := <- local_state:
-				netSend <- T{a, local_id}
 				states[local_id] = a
 		case a := <- netRecv:
 				if a.ID != local_id {
 					states[a.ID] = a.State
 				}
+			case a := <-ticker
+				//send state periodically on net
+				netSend <- T{a, local_id}
+				// do lights here: hall for all elevs, cab for us 
 				
 			
-		case all_statesCh <- states:
+		case all_states <- states:
 
 	
 
-        }
+		}
+		
     }
 }

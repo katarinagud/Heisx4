@@ -1,7 +1,7 @@
 package main
 
-import "./elevio"
-import "./queue"
+import elevio
+import queue
 import "fmt"
 import "./network/bcast"
 import "./network/localip"
@@ -37,6 +37,8 @@ func main(){
 		driver_port = "15657"
 	}
 
+	var all_states map[string]ElevStates
+
 	// Channels
 
 	peerUpdateCh := make(chan peers.PeerUpdate)
@@ -55,7 +57,8 @@ func main(){
 	costTx := make(chan queue.CostValue)
 	costRx := make(chan queue.CostValue)
 
-	updateOrder := make(chan Button)
+	newOrder := make(chan Button)
+	orderDone := make(chan bool)
 
 	portCh := make(chan string)
 
@@ -68,6 +71,15 @@ func main(){
 	go peers.Transmitter(15647, id, peerTxEnable)
 	go peers.Receiver(15647, peerUpdateCh)
 
+	go func(peerUpdateCh <-chan peers.Peerupdate, peerList chan<- []string){
+		var p peers.PeerUpdate
+		for {
+			select {
+			case p = <-peerUpdateCh:
+			case peerList <- p.Peers:
+		}
+	}()
+
 	go bcast.Transmitter(16569, buttonTx)
 	go bcast.Receiver(16569, 	buttonRx)
 	
@@ -77,21 +89,22 @@ func main(){
 	go elevio.PollButtons(drv_buttons)
 	go elevio.PollFloorSensor(drv_floors)
 
-	go fsm.Fsm_update_Elevstates(drv_floors, drv_motor_dir, updateOrder)
+	go elevstates.ElevStates(id, local_state, all_states)
 
-	go elevstates.ElevStates(id, local_state, all_statesCh)
-
-	go queue.UpdateQueue(buttonRx, all_statesCh, peerUpdateCh, updateOrder)
+	go queue.UpdateQueue(drv_buttons, all_states, peerUpdateCh, updateOrder)
 			
-
-	go fsm.SetDir(fsm_move)
-
-	go timer.""()
-
 	elevio.Init("localhost:"+driver_port, numFloors)
 
 
-	
+	go func(){
+		var order Order
+		for {
+			order <- assignedOrder_netRx
+			if order.assignedTo == LocalID {
+				newOrder <- order
+			}
+		}
+	}()
     
     
     for {
@@ -105,8 +118,6 @@ func main(){
 			fmt.Printf("drv_floors:  %#v\n", a)
 		
 			
-		//case b := <-orderAccepted:
-			// Bestemme hvilken av heisene som skal ta orderen
             
 		case p := <-peerUpdateCh:
 			fmt.Printf("Peer update:\n")
@@ -119,8 +130,3 @@ func main(){
 		}
     }    
 }
-
-//func updateQueue(oldQueue){
-	//legge ordre i egen matrise
-	//sende ut ny ordrematrise
-	//vente på godkjenning fra alle heiser}

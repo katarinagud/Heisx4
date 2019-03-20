@@ -1,98 +1,51 @@
 import "./elevio"
-
-package elevio
-
 import "sync"
 import "net"
 import "fmt"
-
-
-type STATES struct{
-	IDLE bool
-	MOVING bool
-	DOOR_OPEN bool
-	MOTOR_STOP bool
-	INIT bool
-}
-
-type ElevStates struct {
-	Floor := elevio.getFloor()
-	Direction int
-	State STATES
-	Orders [4][3] int
-}
-
-type ElevQueue struct {
-	QueueSystem [4][4]int
-	CabCall [4]int
-	HallCall [4][2]int
-	ID string
-}0
+import "time"
 
 
 
 
 
+func fsm_run_elev(newOrder <-chan Button, floorReached chan int, orderDone chan<- Button) {
 
+	doorTime := time.NewTimer(3*time.Second)
+	var e ElevState
 
+	var dir MotorDirection := ChooseDirection(e)
 
-
-
-func Fsm_update_Elevstates(floor <-chan int, motor_dir <-chan MotorDirection, updateOrder <-chan Button) {
+	var state STATES 
+	var order[4][3]int
 
 	for{
 		select{
-	case a := <- floor:
-		ElevStates.Floor = a
-		ElevStates.States = State
-	case a := <- motor_dir:
-		ElevStates.Direction = a
-		ElevStates.States = State
-	case a:= <- updateOrder:
-		if a.Type != 2{
-			ElevStates.Orders[a.Floor][a.Type] = 1
-			ElevStates.States = State
-		}
+		case newOrder := <- newOrder:
 
-			
-	}
-	
-
-	}
-}
-
-
-func fsm_run_elev(updateOrder <-chan Button, floorReached <-chan int ) {
-
-	for{
-		select{
-		case newOrder := <- updateOrder:
-
-			switch ElevStates.State {
+			switch state {
 			case IDLE:
-				var dir MotorDirection := ChooseDir(ElevStates.Floor)
 				if dir == 0 {
-					ElevStates.State = DOOR_OPEN
+					state = DOOR_OPEN
 					elevio.SetDoorOpenLamp(1)
 					time.Sleep(3*time.Second)
 					elevio.SetDoorOpenLamp(0)
-					ElevStates.State = IDLE
+					state = IDLE
 
 				}
 				else{
 					SetMotorDirection(dir)
-					ElevStates.State = MOVING
+					state = MOVING
 				}
 				
 				
 			case MOVING:
 			
 			case DOOR_OPEN:
-				if ElevStates.Floor == newOrder.Floor {
+				if e.Floor == newOrder.Floor {
 					elevio.SetDoorOpenLamp(1)
 					time.Sleep(3*time.Second)
 					elevio.SetDoorOpenLamp(0)
-					ElevStates.State = IDLE
+					state = IDLE
 
 				}
 			case MOTOR_STOP:
@@ -101,13 +54,34 @@ func fsm_run_elev(updateOrder <-chan Button, floorReached <-chan int ) {
 		
 		case floorArrival := <- floorReached:
 
-			switch ElevStates.State {
+			switch state {
 			case IDLE:
 			
 			case MOVING:
-				if ElevStates.Orders[F][] == 
-			}
+				if ShouldStop(e)
+					e = ClearAtCurrentFloor(e, func(btn int){ orderDone <- Button{e.Floor, btn} })
+					state = DOOR_OPEN
+					SetMotorDirection(0)
+					doorTime.Reset(3*time.Second)
+					elevio.SetDoorOpenLamp(1)
+					
+					
+					// some door shit goes here
+					// maybe a timer idk
+
+				
 			
+			case INIT:
+				SetMotorDirection(0)
+			}
+		case doorTimeOut := <- doorTime.C:
+			
+			switch state {
+			case DOOR_OPEN:
+				elevio.SetDoorOpenLamp(0)
+				orderDone <- true
+			}
+		
 		}
 	}
 
